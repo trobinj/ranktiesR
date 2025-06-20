@@ -1,0 +1,13 @@
+Package: ranktiesR
+Type: Package
+Title: Experimental package for Thurstonian models for ranking data with ties.
+Version: 0.1.0
+Author: Timothy R. Johnson
+Maintainer: Timothy R. Johnson <trjohns@uidaho.edu>
+Description: R interfaces for C++ functions for estimating Thurstonian
+	models for ranking data with ties using MCEM algorithms.
+License: GPL (>= 2)
+Encoding: UTF-8
+LazyData: true
+Imports: Rcpp (>= 1.0.14)
+LinkingTo: Rcpp, RcppArmadillo
