@@ -282,7 +282,6 @@ public:
 
     if (type == "k1d") {
       for (int i = 0; i < n; ++i) {
-        Rcpp::Rcout << i+1 << "\n";
         zdist.setm(eta.col(i));
         data[i].estep_k1d(zdist, delta, nmatch);
       }
@@ -290,7 +289,6 @@ public:
     }
 
     for (int i = 0; i < n; ++i) {
-      Rcpp::Rcout << i + 1 << "\n";
       zdist.setm(eta.col(i));
       data[i].estep_tie(zdist, delta, type, nmatch);
     }
