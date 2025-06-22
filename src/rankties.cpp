@@ -5,6 +5,7 @@
 #include "kmeans1d.h"
 #include "hclust.h"
 #include "sep.h"
+#include "seqcluster.h"
 
 // [[Rcpp::depends(RcppArmadillo)]]
 
@@ -101,18 +102,26 @@ public:
   void estep_tie(cnorm& zdist, double delta, std::string type, int nmatch)
   {
     clfunc cluster;
-    if (type == "sep") cluster = sep;
-    if (type == "pxu") cluster = poonxu;
-    if (type == "hcl") cluster = hclust;
+    if (type == "poon_xu") cluster = poon_xu;
+    if (type == "seq_min") cluster = seq_min;
+    if (type == "seq_max") cluster = seq_max;
+    if (type == "seq_avg") cluster = seq_avg;
 
     dvec utmp(k);
     uvec ytmp(k);
     rvec z0 = z.row(0);
 
+    int cnt;
     for (int j = 0; j < m; ++j) {
+      cnt = 0;
       do {
+        cnt++;
         utmp.head(k - 1) = zsamp(z0, zdist);
         ytmp = cluster(utmp, delta);
+        if (cnt > 50000) {
+          Rcpp::Rcout << "break" << "\n";
+          break;
+        }
       } while (!vecmatch(y, ytmp, nmatch));
       z.row(j) = utmp.head(k - 1).t();
     }
@@ -124,10 +133,17 @@ public:
     uvec ytmp(k);
     rvec z0 = z.row(0);
   
+    int cnt;
     for (int j = 0; j < m; ++j) {
+      cnt = 0;
       do {
+        cnt++;
         utmp.head(k - 1) = zsamp(z0, zdist);
         ytmp = kmeans1d(utmp, delta, ysets);
+        if (cnt > 50000) {
+          Rcpp::Rcout << "break" << "\n";
+          break;
+        }
       } while (!vecmatch(y, ytmp, nmatch));
       z.row(j) = utmp.head(k - 1).t();
     }
@@ -228,9 +244,10 @@ public:
     double l = 0.0;
 
     clfunc cluster;
-    if (type == "sep") cluster = sep;
-    if (type == "pxu") cluster = poonxu;
-    if (type == "hcl") cluster = hclust;
+    if (type == "poon_xu") cluster = poon_xu;
+    if (type == "seq_min") cluster = seq_min;
+    if (type == "seq_max") cluster = seq_max;
+    if (type == "seq_avg") cluster = seq_avg;
 
     for (int i = 0; i < n; ++i) {
       yobs = y.row(i).t();
@@ -320,13 +337,9 @@ public:
 Rcpp::List rankties(umat y, dmat x, uvec n, uvec m, int t,
   double delta, std::string type, bool print, int v)
 {
-  if (std::set<std::string>{"ran","k1d","pxu","hcl","sep"}.count(type) == 0) {
+  if (std::set<std::string>{"ran","pxu","seq_min","seq_max","seq_avg"}.count(type) == 0) {
     Rcpp::stop("unknown type");
   }
-  if (type == "k1d" && delta == 0) Rcpp::stop("model not identified");
-  if (type == "pxu" && delta == 0) Rcpp::stop("model not identified");
-  if (type == "hcl" && delta == 0) Rcpp::stop("model not identified");
-  if (type == "sep" && delta == 0) Rcpp::stop("model not identified");
 
   int k = y.n_cols;
   int p = x.n_cols;

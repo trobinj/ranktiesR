@@ -12,30 +12,6 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
-// hclust
-uvec hclust(dvec u, double delta);
-RcppExport SEXP _ranktiesR_hclust(SEXP uSEXP, SEXP deltaSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< dvec >::type u(uSEXP);
-    Rcpp::traits::input_parameter< double >::type delta(deltaSEXP);
-    rcpp_result_gen = Rcpp::wrap(hclust(u, delta));
-    return rcpp_result_gen;
-END_RCPP
-}
-// poonxu
-uvec poonxu(dvec u, double delta);
-RcppExport SEXP _ranktiesR_poonxu(SEXP uSEXP, SEXP deltaSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< dvec >::type u(uSEXP);
-    Rcpp::traits::input_parameter< double >::type delta(deltaSEXP);
-    rcpp_result_gen = Rcpp::wrap(poonxu(u, delta));
-    return rcpp_result_gen;
-END_RCPP
-}
 // rankties
 Rcpp::List rankties(umat y, dmat x, uvec n, uvec m, int t, double delta, std::string type, bool print, int v);
 RcppExport SEXP _ranktiesR_rankties(SEXP ySEXP, SEXP xSEXP, SEXP nSEXP, SEXP mSEXP, SEXP tSEXP, SEXP deltaSEXP, SEXP typeSEXP, SEXP printSEXP, SEXP vSEXP) {
@@ -57,8 +33,6 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_ranktiesR_hclust", (DL_FUNC) &_ranktiesR_hclust, 2},
-    {"_ranktiesR_poonxu", (DL_FUNC) &_ranktiesR_poonxu, 2},
     {"_ranktiesR_rankties", (DL_FUNC) &_ranktiesR_rankties, 9},
     {NULL, NULL, 0}
 };

@@ -1,7 +1,6 @@
 #ifndef hclust_h
 #define hclust_h
 
-
 #include <RcppArmadillo.h>
 #include "ranktiesR_types.h"
 #include "misc.h"
@@ -47,7 +46,6 @@ dvec cfind(std::vector<uvec> g, dvec u, double& dist)
   return out;
 }
 
-// [[Rcpp::export]]
 uvec hclust(dvec u, double delta)
 {
   int k = u.n_elem;

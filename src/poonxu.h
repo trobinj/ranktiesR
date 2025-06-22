@@ -12,8 +12,7 @@ static unsigned int indx(uvec x, int y)
 	return as_scalar(find(x == y));
 }
 
-// [[Rcpp::export]]
-uvec poonxu(dvec u, double delta)
+uvec poon_xu(dvec u, double delta)
 {
 	int n = u.n_elem;
 
