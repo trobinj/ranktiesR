@@ -118,11 +118,8 @@ public:
         cnt++;
         utmp.head(k - 1) = zsamp(z0, zdist);
         ytmp = cluster(utmp, delta);
-        if (cnt > 50000) {
-          Rcpp::Rcout << "break" << "\n";
-          break;
-        }
       } while (!vecmatch(y, ytmp, nmatch));
+      Rcpp::Rcout << cnt << "\n";
       z.row(j) = utmp.head(k - 1).t();
     }
   }
@@ -366,7 +363,6 @@ Rcpp::List rankties(umat y, dmat x, uvec n, uvec m, int t,
     }
 
     data.estep(delta, type, std::min(i+1,k));
-
     data.mstep();
     if (type == "ran") data.xstep();
 
