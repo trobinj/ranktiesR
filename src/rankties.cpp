@@ -1,4 +1,5 @@
 #include <RcppArmadillo.h>
+#include <omp.h>
 #include "ranktiesR_types.h"
 #include "misc.h"
 #include "poonxu.h"
@@ -8,6 +9,7 @@
 #include "seqcluster.h"
 
 // [[Rcpp::depends(RcppArmadillo)]]
+// [[Rcpp::plugins(openmp)]]
 
 using namespace arma;
 
@@ -76,16 +78,20 @@ public:
 
   dvec zsamp(rvec& z, cnorm& zdist)
   {
+    uvec l = regspace<uvec>(0, k - 2);
+    l = shuffle(l);
+    int h;
     dvec u(k);
     u.head(k - 1) = z.t();
     double mj, sj, aj, bj;
     for (int i = 0; i < t; ++i) {
       for (int j = 0; j < k - 1; ++j) {
-        mj = zdist.getm(j, u.head(k - 1));
-        sj = zdist.gets(j);
-        aj = lower[j].is_empty() ? ninf : max(u(lower[j]));
-        bj = upper[j].is_empty() ? pinf : min(u(upper[j]));
-        u(j) = rtnorm(mj, sj, aj, bj);
+        h = l(j);
+        mj = zdist.getm(h, u.head(k - 1));
+        sj = zdist.gets(h);
+        aj = lower[h].is_empty() ? ninf : max(u(lower[h]));
+        bj = upper[h].is_empty() ? pinf : min(u(upper[h]));
+        u(h) = rtnorm(mj, sj, aj, bj);
       }
     }
     return u.head(k - 1);
@@ -119,7 +125,6 @@ public:
         utmp.head(k - 1) = zsamp(z0, zdist);
         ytmp = cluster(utmp, delta);
       } while (!vecmatch(y, ytmp, nmatch));
-      Rcpp::Rcout << cnt << "\n";
       z.row(j) = utmp.head(k - 1).t();
     }
   }
@@ -129,7 +134,7 @@ public:
     dvec utmp(k);
     uvec ytmp(k);
     rvec z0 = z.row(0);
-  
+
     int cnt;
     for (int j = 0; j < m; ++j) {
       cnt = 0;
@@ -302,6 +307,9 @@ public:
       return;
     }
 
+    int ncores = 20;
+    omp_set_num_threads(ncores);
+    #pragma omp parallel for
     for (int i = 0; i < n; ++i) {
       zdist.setm(eta.col(i));
       data[i].estep_tie(zdist, delta, type, nmatch);
