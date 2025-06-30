@@ -151,10 +151,7 @@ public:
     betag = betag / m;
     sigmg = sigmg / m;
 
-    sigmv = lowertri(sigmg);
-    sigmv = sigmv.tail(k * (k - 1) / 2);
-
-    return join_vert(vectorise(betag), sigmv);
+    return join_vert(vectorise(betag), vectorise(lowertri(sigmg)));
   }
 };
 
