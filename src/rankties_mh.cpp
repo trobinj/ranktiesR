@@ -145,8 +145,7 @@ public:
     for (int j = 0; j < m; ++j) {
       z = (zthin.row(j).t() - beta * x);
       betag = betag + R * z * x.t();
-      sigmg = sigmg + 0.5 * (2 * R - (R * I) - 2.0 * 
-        R * z * z.t() * R + R * z * z.t() * R * I);
+      sigmg = sigmg - 0.5 * (2 * R - (R % I) - 2 * R * z * z.t() * R + ((R * z * z.t() * R) % I));
     }
 
     betag = betag / m;
