@@ -12,4 +12,6 @@ using arma::ivec;
 using rvec = arma::rowvec;
 using uint = unsigned int;
 
+typedef uvec (*clfunc)(dvec, double);
+
 #endif

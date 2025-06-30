@@ -6,32 +6,41 @@
 #include "misc.h"
 #include <cmath>
 
-double cdist(dvec a, dvec b) // complete-linkage
+double cdist(dvec a, dvec b, std::string linkage)
 {
   int na = a.n_elem;
   int nb = b.n_elem;
-  double d, y = 0.0;
+  dmat d(na, nb);
 
   for (int i = 0; i < na; ++i) {
     for (int j = 0; j < nb; ++j) {
-      d = std::abs(a(i) - b(j));
-      if (d > y) {
-        y = d;
-      }
+      d(i,j) = std::abs(a(i) - b(j));
     }
   }
 
-  return y;
+  if (linkage == "single") {
+    return min(vectorise(d));
+  }
+
+  if (linkage == "complete") {
+    return max(vectorise(d));
+  }
+
+  if (linkage == "average") {
+    return mean(vectorise(d));
+  }
+
+  Rcpp::stop("linkage not recognized");
 }
 
-dvec cfind(std::vector<uvec> g, dvec u, double& dist)
+dvec cfind(std::vector<uvec>& g, dvec u, double& dist, std::string linkage)
 {
   int n = g.size();
-  double a, b, d, y = 100;
+  double a, b, d, y = 1000;
 
   for (int i = 1; i < n; ++i) {
     for (int j = 0; j < i; ++j) {
-      d = cdist(u(g[i]), u(g[j]));
+      d = cdist(u(g[i]), u(g[j]), linkage);
       if (d < y) {
         y = d;
         a = i;
@@ -46,7 +55,7 @@ dvec cfind(std::vector<uvec> g, dvec u, double& dist)
   return out;
 }
 
-uvec hclust(dvec u, double delta)
+uvec hclust(dvec u, double delta, std::string linkage)
 {
   int k = u.n_elem;
   uvec x(1);
@@ -65,7 +74,7 @@ uvec hclust(dvec u, double delta)
   uvec out;
 
   for (int i = 0; i < k - 1; ++i) {
-    tmp = cfind(g, u, d);
+    tmp = cfind(g, u, d, linkage);
     if (d > delta) {
       if (i == 0) {
         return r;
@@ -85,6 +94,21 @@ uvec hclust(dvec u, double delta)
   out.set_size(k);
   out.fill(1);
   return out;
+}
+
+uvec hcl_min(dvec u, double delta)
+{
+  return hclust(u, delta, "single");
+}
+
+uvec hcl_max(dvec u, double delta)
+{
+  return hclust(u, delta, "complete");
+}
+
+uvec hcl_avg(dvec u, double delta)
+{
+  return hclust(u, delta, "average");
 }
 
 #endif

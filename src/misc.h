@@ -6,6 +6,138 @@
 
 // [[Rcpp::depends(RcppArmadillo)]]
 
+void heapPermutations(uvec &x, int n, umat &y)
+{
+	if (n == 1) {
+		y = join_vert(y, x.t());
+	}
+	else {
+		for (int i = 0; i < n; ++i) {
+			heapPermutations(x, n - 1, y);
+			if (n % 2 == 1) {
+				std::swap(x(0), x(n - 1));
+			}
+			else {
+				std::swap(x(i), x(n - 1));
+			}
+		}
+	}
+}
+
+umat heapPermutations(uvec x)
+{
+	umat y;
+	uvec z(x);
+	int n = z.n_elem;
+	heapPermutations(z, n, y);
+	return y;
+}
+
+// [[Rcpp::export]]
+umat heapPermutations(int a, int b)
+{
+  umat y;
+  uvec z = arma::regspace<uvec>(a, b);
+  int n = z.n_elem;
+	heapPermutations(z, n, y);
+	return y;
+}
+
+class mvndist
+{
+private:
+
+	dvec mu;
+	dmat sigma;
+	double ldet;
+	dmat R;
+
+public:
+
+	mvndist(dvec mu, dmat sigma) : mu(mu), sigma(sigma)
+	{
+		log_det_sympd(ldet, 2.0 * M_PI * sigma);
+		R = arma::chol(inv(sigma));
+	}
+
+	double logpdf(dvec y)
+	{
+		dvec z = R * (y - mu);
+		return -ldet/2 - as_scalar(z.t() * z)/2;
+	}
+};
+
+unsigned int indx(uvec x, int y)
+{
+	return as_scalar(find(x == y));
+}
+
+uvec rankvec(dvec y)
+{
+  int n = y.n_elem;
+  uvec indx = sort_index(y);
+  uvec rnks(n);
+  for (int i = 0; i < n; ++i) {
+    rnks(indx(i)) = i + 1;
+  }
+  return rnks;
+}
+
+uvec rankvec(uvec y)
+{
+  int n = y.n_elem;
+  uvec indx = sort_index(y);
+  uvec rnks(n);
+  for (int i = 0; i < n; ++i) {
+    rnks(indx(i)) = i + 1;
+  }
+  return rnks;
+}
+
+// [[Rcpp::export]]
+bool rankmatch(uvec y, uvec x)
+{
+  int n = y.n_elem;
+
+  uvec indx = sort_index(x);
+  y = y(indx);
+
+  for (int i = 1; i < n; ++i) {
+    if (y(i) < y(i - 1)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+// [[Rcpp::export]]
+dmat rankmat(uvec r)
+{
+	int k = r.n_elem;
+	dmat y(k - 1, k);
+
+	for (int i = 0; i < k - 1; ++i) {
+		y(i, indx(r, i + 1)) =  1;
+		y(i, indx(r, i + 2)) = -1;
+	}
+	return y;
+}
+
+// [[Rcpp::export]]
+umat rankset(uvec y, umat x) // change to pass-by-reference after testing
+{
+	int n = x.n_elem;
+	uvec inc(n);
+
+	for (int i = 0; i < n; ++i) {
+		if (rankmatch(y, x.row(i).t())) {
+			inc(i) = 1;
+		}
+	}
+
+	return x.rows(find(inc));
+}
+
 bool vecmatch(uvec a, uvec b, int k)
 {
 	return sum(a == b) < k ? false : true;
@@ -78,17 +210,6 @@ dvec srs(dvec x, int n)
     vswap(x, i, j);
   }
   return x.head(n);
-}
-
-uvec rankvec(dvec y)
-{
-  int n = y.n_elem;
-  uvec indx = sort_index(y);
-  uvec rnks(n);
-  for (int i = 0; i < n; ++i) {
-    rnks(indx(i)) = i + 1;
-  }
-  return rnks;
 }
 
 double rnormint(double m, double s, double a, double b)
