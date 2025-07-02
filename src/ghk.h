@@ -11,7 +11,7 @@ namespace ghkspc
     return R::pnorm(z, 0.0, 1.0, true, false);
   }
   double tnorm(double a, double b) {
-    return rnormint(0.0, 1.0, a, b);
+    return rtnorm(0.0, 1.0, a, b);
   }
 }
 

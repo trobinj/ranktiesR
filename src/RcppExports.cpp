@@ -12,50 +12,21 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
-// heapPermutations
-umat heapPermutations(int a, int b);
-RcppExport SEXP _ranktiesR_heapPermutations(SEXP aSEXP, SEXP bSEXP) {
+// genz
+double genz(arma::vec a, arma::vec b, arma::vec mu, arma::mat sigma, double epsilon, double alpha, int nmin, int nmax);
+RcppExport SEXP _ranktiesR_genz(SEXP aSEXP, SEXP bSEXP, SEXP muSEXP, SEXP sigmaSEXP, SEXP epsilonSEXP, SEXP alphaSEXP, SEXP nminSEXP, SEXP nmaxSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type a(aSEXP);
-    Rcpp::traits::input_parameter< int >::type b(bSEXP);
-    rcpp_result_gen = Rcpp::wrap(heapPermutations(a, b));
-    return rcpp_result_gen;
-END_RCPP
-}
-// rankmatch
-bool rankmatch(uvec y, uvec x);
-RcppExport SEXP _ranktiesR_rankmatch(SEXP ySEXP, SEXP xSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< uvec >::type y(ySEXP);
-    Rcpp::traits::input_parameter< uvec >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(rankmatch(y, x));
-    return rcpp_result_gen;
-END_RCPP
-}
-// rankmat
-dmat rankmat(uvec r);
-RcppExport SEXP _ranktiesR_rankmat(SEXP rSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< uvec >::type r(rSEXP);
-    rcpp_result_gen = Rcpp::wrap(rankmat(r));
-    return rcpp_result_gen;
-END_RCPP
-}
-// rankset
-umat rankset(uvec y, umat x);
-RcppExport SEXP _ranktiesR_rankset(SEXP ySEXP, SEXP xSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< uvec >::type y(ySEXP);
-    Rcpp::traits::input_parameter< umat >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(rankset(y, x));
+    Rcpp::traits::input_parameter< arma::vec >::type a(aSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type b(bSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type mu(muSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type sigma(sigmaSEXP);
+    Rcpp::traits::input_parameter< double >::type epsilon(epsilonSEXP);
+    Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
+    Rcpp::traits::input_parameter< int >::type nmin(nminSEXP);
+    Rcpp::traits::input_parameter< int >::type nmax(nmaxSEXP);
+    rcpp_result_gen = Rcpp::wrap(genz(a, b, mu, sigma, epsilon, alpha, nmin, nmax));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -81,18 +52,19 @@ BEGIN_RCPP
 END_RCPP
 }
 // ranktiesloglik
-double ranktiesloglik(umat y, dmat x, dvec theta, std::string type, double delta, int m);
-RcppExport SEXP _ranktiesR_ranktiesloglik(SEXP ySEXP, SEXP xSEXP, SEXP thetaSEXP, SEXP typeSEXP, SEXP deltaSEXP, SEXP mSEXP) {
+double ranktiesloglik(umat y, dvec x, dvec theta, std::string type, double delta, int b, int m);
+RcppExport SEXP _ranktiesR_ranktiesloglik(SEXP ySEXP, SEXP xSEXP, SEXP thetaSEXP, SEXP typeSEXP, SEXP deltaSEXP, SEXP bSEXP, SEXP mSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< umat >::type y(ySEXP);
-    Rcpp::traits::input_parameter< dmat >::type x(xSEXP);
+    Rcpp::traits::input_parameter< dvec >::type x(xSEXP);
     Rcpp::traits::input_parameter< dvec >::type theta(thetaSEXP);
     Rcpp::traits::input_parameter< std::string >::type type(typeSEXP);
     Rcpp::traits::input_parameter< double >::type delta(deltaSEXP);
+    Rcpp::traits::input_parameter< int >::type b(bSEXP);
     Rcpp::traits::input_parameter< int >::type m(mSEXP);
-    rcpp_result_gen = Rcpp::wrap(ranktiesloglik(y, x, theta, type, delta, m));
+    rcpp_result_gen = Rcpp::wrap(ranktiesloglik(y, x, theta, type, delta, b, m));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -129,12 +101,9 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_ranktiesR_heapPermutations", (DL_FUNC) &_ranktiesR_heapPermutations, 2},
-    {"_ranktiesR_rankmatch", (DL_FUNC) &_ranktiesR_rankmatch, 2},
-    {"_ranktiesR_rankmat", (DL_FUNC) &_ranktiesR_rankmat, 1},
-    {"_ranktiesR_rankset", (DL_FUNC) &_ranktiesR_rankset, 2},
+    {"_ranktiesR_genz", (DL_FUNC) &_ranktiesR_genz, 8},
     {"_ranktiesR_rankties", (DL_FUNC) &_ranktiesR_rankties, 11},
-    {"_ranktiesR_ranktiesloglik", (DL_FUNC) &_ranktiesR_ranktiesloglik, 6},
+    {"_ranktiesR_ranktiesloglik", (DL_FUNC) &_ranktiesR_ranktiesloglik, 7},
     {"_ranktiesR_foo", (DL_FUNC) &_ranktiesR_foo, 5},
     {"_ranktiesR_residuals", (DL_FUNC) &_ranktiesR_residuals, 6},
     {NULL, NULL, 0}

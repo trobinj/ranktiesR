@@ -5,6 +5,8 @@
 #include "hclust.h"
 #include "poon_xu.h"
 #include "ghk.h"
+#include "genz.h"
+#include <algorithm>
 
 // [[Rcpp::depends(RcppArmadillo)]]
 
@@ -331,57 +333,136 @@ Rcpp::List rankties(umat y, dmat x, dmat z, uvec n, uvec m, int t, double delta,
 }
 
 // [[Rcpp::export]]
-double ranktiesloglik(umat y, dmat x, dvec theta, std::string type, double delta, int m)
+double ranktiesloglik(umat y, dvec x, dvec theta, std::string type, double delta, int b, int m)
 {
-  int n = y.n_rows;
-  int k = y.n_cols;
-  int p = x.n_cols;
-  int q = k * (k - 1)/2;
-
-  dmat beta(k-1,p);
-  dmat sigm(k-1,k-1);
-
   clfunc cluster;
   if (type == "seq_min") cluster = seq_min;
   if (type == "seq_max") cluster = seq_max;
   if (type == "seq_avg") cluster = seq_avg;
   if (type == "poon_xu") cluster = poon_xu;
+  if (type == "hcl_min") cluster = hcl_min;
+  if (type == "hcl_max") cluster = hcl_max;
+  if (type == "hcl_avg") cluster = hcl_avg;
 
+  int n = y.n_rows;
+  int k = y.n_cols;
+  int p = x.n_elem;
+  int q = k * (k - 1) / 2;
+
+  umat R = allpermutations(k);
+
+  uvec indx_all(R.n_rows);
+  uvec indx_set;
+  std::vector<uvec> indx_vec;
+  indx_vec.reserve(n);
+
+  for (int i = 0; i < n; ++i) {
+    indx_set = rankset(y.row(i).t(), R);
+    indx_vec.emplace_back(indx_set);
+    indx_all(indx_set).fill(1);
+  }
+
+  dmat beta(k-1,p);
+  dmat sigm(k-1,k-1);
   dmat temp = theta.head((k-1)*p);
   beta = temp.reshape(size(beta));
   sigm = vec2lower(theta.tail(q), true);
-  dmat Q = arma::chol(sigm, "lower");
 
-  dmat eta = beta * x.t();
-  uvec ytmp(k);
-  dvec utmp(k);
-  dvec mu(k);
-  uvec yi(k);
+  dvec mu = beta * x;
+  dmat D;
+  dvec lower(k - 1);
+  dvec upper(k - 1);
 
-  dvec prob(n);
+  lower.fill(0.0);
+  upper.fill(100);
+
+  dvec prob_all(R.n_rows);
+  for (int i = 0; i < R.n_rows; ++i) {
+    if (indx_all(i)) {
+      D = rankmat(R.row(i).t());
+      D.shed_col(k - 1);
+      prob_all(i) = genz(lower, upper, D * mu, D * sigm * D.t(),
+        0.00001, 2.5, 100, 1000);
+    }
+  }
+
+  dvec prob_set(n);
+  dvec prob;
   for (int i = 0; i < n; ++i) {
-    mu = eta.col(i);
+    prob = prob_all.rows(indx_vec[i]);
+    prob_set(i) = sum(prob);
+  }
+
+  dmat u;
+  uvec yi;
+  uvec ytmp;
+  dvec incl(m);
+  double loglik = 0.0;
+  cnorm zdist(mu, sigm);
+  for (int i = 0; i < n; ++i) {
     yi = y.row(i).t();
+    u = zsamp(yi, zdist, b, m);
     for (int j = 0; j < m; ++j) {
-      utmp.head(k-1) = mvrnorm(mu, Q, true);
-      ytmp = cluster(utmp, delta);
-      if (all(yi == ytmp)) {
-        ++prob(i);
-      }
+      ytmp = cluster(u.row(j).t(), delta);
+      incl(j) = all(yi == ytmp) ? prob_set(i) : 0.0;
     }
-    prob(i) = prob(i)/m;
+    loglik = loglik + log(arma::sum(incl)) - log(m);
   }
 
-  double minprob = min(prob(find(prob > 0.0)));
-  for (int i = 0; i < n; ++i) {
-    Rcpp::Rcout << prob(i) << "\n";
-    if (prob(i) == 0) {
-      prob(i) = minprob;
-    }
-  }
-
-  return sum(log(prob));
+  return loglik;
 }
+
+// double ranktiesloglik(umat y, dmat x, dvec theta, std::string type, double delta, int m)
+// {
+//   int n = y.n_rows;
+//   int k = y.n_cols;
+//   int p = x.n_cols;
+//   int q = k * (k - 1)/2;
+
+//   dmat beta(k-1,p);
+//   dmat sigm(k-1,k-1);
+
+//   clfunc cluster;
+//   if (type == "seq_min") cluster = seq_min;
+//   if (type == "seq_max") cluster = seq_max;
+//   if (type == "seq_avg") cluster = seq_avg;
+//   if (type == "poon_xu") cluster = poon_xu;
+
+//   dmat temp = theta.head((k-1)*p);
+//   beta = temp.reshape(size(beta));
+//   sigm = vec2lower(theta.tail(q), true);
+//   dmat Q = arma::chol(sigm, "lower");
+
+//   dmat eta = beta * x.t();
+//   uvec ytmp(k);
+//   dvec utmp(k);
+//   dvec mu(k);
+//   uvec yi(k);
+
+//   dvec prob(n);
+//   for (int i = 0; i < n; ++i) {
+//     mu = eta.col(i);
+//     yi = y.row(i).t();
+//     for (int j = 0; j < m; ++j) {
+//       utmp.head(k-1) = mvrnorm(mu, Q, true);
+//       ytmp = cluster(utmp, delta);
+//       if (all(yi == ytmp)) {
+//         ++prob(i);
+//       }
+//     }
+//     prob(i) = prob(i)/m;
+//   }
+
+//   double minprob = min(prob(find(prob > 0.0)));
+//   for (int i = 0; i < n; ++i) {
+//     Rcpp::Rcout << prob(i) << "\n";
+//     if (prob(i) == 0) {
+//       prob(i) = minprob;
+//     }
+//   }
+
+//   return sum(log(prob));
+// }
 
 // [[Rcpp::export]]
 double foo(arma::vec m, arma::mat s, arma::vec low, arma::vec upp, int n)

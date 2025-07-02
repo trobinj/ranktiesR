@@ -6,41 +6,22 @@
 
 // [[Rcpp::depends(RcppArmadillo)]]
 
-void heapPermutations(uvec &x, int n, umat &y)
+int factorial(uint n)
 {
-	if (n == 1) {
-		y = join_vert(y, x.t());
-	}
-	else {
-		for (int i = 0; i < n; ++i) {
-			heapPermutations(x, n - 1, y);
-			if (n % 2 == 1) {
-				std::swap(x(0), x(n - 1));
-			}
-			else {
-				std::swap(x(i), x(n - 1));
-			}
-		}
-	}
+  return (n == 1 || n == 0) ? 1 : factorial(n - 1) * n;
 }
 
-umat heapPermutations(uvec x)
+umat allpermutations(int k)
 {
-	umat y;
-	uvec z(x);
-	int n = z.n_elem;
-	heapPermutations(z, n, y);
-	return y;
-}
+  uvec y = arma::regspace<uvec>(1, k);
+  umat x(k, factorial(k));
 
-// [[Rcpp::export]]
-umat heapPermutations(int a, int b)
-{
-  umat y;
-  uvec z = arma::regspace<uvec>(a, b);
-  int n = z.n_elem;
-	heapPermutations(z, n, y);
-	return y;
+  int i = 0;
+  do {
+    x.col(i++) = y;
+  } while (std::next_permutation(y.begin(), y.end()));
+
+  return x.t();
 }
 
 class mvndist
@@ -94,7 +75,6 @@ uvec rankvec(uvec y)
   return rnks;
 }
 
-// [[Rcpp::export]]
 bool rankmatch(uvec y, uvec x)
 {
   int n = y.n_elem;
@@ -110,7 +90,6 @@ bool rankmatch(uvec y, uvec x)
   return true;
 }
 
-// [[Rcpp::export]]
 dmat rankmat(uvec r)
 {
 	int k = r.n_elem;
@@ -123,10 +102,9 @@ dmat rankmat(uvec r)
 	return y;
 }
 
-// [[Rcpp::export]]
-umat rankset(uvec y, umat x) // change to pass-by-reference after testing
+uvec rankset(uvec y, umat x)
 {
-	int n = x.n_elem;
+	int n = x.n_rows;
 	uvec inc(n);
 
 	for (int i = 0; i < n; ++i) {
@@ -135,7 +113,7 @@ umat rankset(uvec y, umat x) // change to pass-by-reference after testing
 		}
 	}
 
-	return x.rows(find(inc));
+	return find(inc);
 }
 
 bool vecmatch(uvec a, uvec b, int k)
@@ -227,16 +205,16 @@ double rnormint(double m, double s, double a, double b)
 		d = 0.0;
 	}
 
-	if ((b - a) / d < sqrt2pi) {
+	if (d == 0.0 && b - a > sqrt2pi) {
+		do {
+			z = R::rnorm(0.0, 1.0);
+		} while (low > z || z > upp);
+	} else {
 		do {
 			z = R::runif(low, upp);
 			u = R::runif(0.0, 1.0);
 			p = exp((d - pow(z,2)) / 2.0);
 		} while (u > p);
-	} else {
-		do {
-			z = R::rnorm(0.0, 1.0);
-		} while (low > z || z > upp);
 	}
 
 	return z * s + m;
@@ -355,5 +333,50 @@ public:
 		return m(i) + as_scalar(b.row(i) * (y2 - m2));
 	}
 };
+
+dmat zsamp(uvec y, cnorm& zdist, int b, int n)
+{
+  const double ninf = arma::datum::nan;
+  const double pinf = arma::datum::nan;
+
+  int k = y.n_elem;
+  int r = max(y);
+
+  dmat u(n + b, k);
+  dvec v(r, arma::fill::randn);
+  dvec z(k);
+  v = sort(v, "descend");
+  for (int j = 0; j < r; ++j) {
+    z(find(y == j + 1)).fill(v(j));
+  }
+  u.row(0) = z.t();
+  u.row(0) = u.row(0) - u(0, k-1);
+
+  std::vector<uvec> lower;
+  std::vector<uvec> upper;
+
+  lower.reserve(k);
+  upper.reserve(k);
+  for (int j = 0; j < k; ++j) {
+    lower.emplace_back(find(y == y(j) + 1));
+    upper.emplace_back(find(y == y(j) - 1));
+  }
+
+  dvec ui(k);
+  double mj, sj, aj, bj;
+  for (int i = 1; i < n + b; ++i) {
+		ui = u.row(i-1).t();
+    for (int j = 0; j < k - 1; ++j) {
+      mj = zdist.getm(j, ui.head(k-1));
+      sj = zdist.gets(j);
+      aj = lower[j].is_empty() ? ninf : max(ui(lower[j]));
+      bj = upper[j].is_empty() ? pinf : min(ui(upper[j]));
+      ui(j) = rtnorm(mj, sj, aj, bj);
+    }
+		u.row(i) = ui.t();
+  }
+
+  return u.tail_rows(n);
+}
 
 #endif
