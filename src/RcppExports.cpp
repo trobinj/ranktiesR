@@ -12,27 +12,9 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
-// genz
-double genz(arma::vec a, arma::vec b, arma::vec mu, arma::mat sigma, double epsilon, double alpha, int nmin, int nmax);
-RcppExport SEXP _ranktiesR_genz(SEXP aSEXP, SEXP bSEXP, SEXP muSEXP, SEXP sigmaSEXP, SEXP epsilonSEXP, SEXP alphaSEXP, SEXP nminSEXP, SEXP nmaxSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::vec >::type a(aSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type b(bSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type mu(muSEXP);
-    Rcpp::traits::input_parameter< arma::mat >::type sigma(sigmaSEXP);
-    Rcpp::traits::input_parameter< double >::type epsilon(epsilonSEXP);
-    Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
-    Rcpp::traits::input_parameter< int >::type nmin(nminSEXP);
-    Rcpp::traits::input_parameter< int >::type nmax(nmaxSEXP);
-    rcpp_result_gen = Rcpp::wrap(genz(a, b, mu, sigma, epsilon, alpha, nmin, nmax));
-    return rcpp_result_gen;
-END_RCPP
-}
-// rankties
-Rcpp::List rankties(umat y, dmat x, dmat z, uvec n, uvec m, int t, double delta, double scale, std::string type, int h, bool print);
-RcppExport SEXP _ranktiesR_rankties(SEXP ySEXP, SEXP xSEXP, SEXP zSEXP, SEXP nSEXP, SEXP mSEXP, SEXP tSEXP, SEXP deltaSEXP, SEXP scaleSEXP, SEXP typeSEXP, SEXP hSEXP, SEXP printSEXP) {
+// ranktiesmodel
+Rcpp::List ranktiesmodel(umat y, dmat x, dmat z, uvec n, uvec m, int t, double delta, double scale, std::string type, int h, bool print);
+RcppExport SEXP _ranktiesR_ranktiesmodel(SEXP ySEXP, SEXP xSEXP, SEXP zSEXP, SEXP nSEXP, SEXP mSEXP, SEXP tSEXP, SEXP deltaSEXP, SEXP scaleSEXP, SEXP typeSEXP, SEXP hSEXP, SEXP printSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -47,39 +29,25 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< std::string >::type type(typeSEXP);
     Rcpp::traits::input_parameter< int >::type h(hSEXP);
     Rcpp::traits::input_parameter< bool >::type print(printSEXP);
-    rcpp_result_gen = Rcpp::wrap(rankties(y, x, z, n, m, t, delta, scale, type, h, print));
+    rcpp_result_gen = Rcpp::wrap(ranktiesmodel(y, x, z, n, m, t, delta, scale, type, h, print));
     return rcpp_result_gen;
 END_RCPP
 }
 // ranktiesloglik
-double ranktiesloglik(umat y, dvec x, dvec theta, std::string type, double delta, int b, int m);
-RcppExport SEXP _ranktiesR_ranktiesloglik(SEXP ySEXP, SEXP xSEXP, SEXP thetaSEXP, SEXP typeSEXP, SEXP deltaSEXP, SEXP bSEXP, SEXP mSEXP) {
+double ranktiesloglik(umat y, dvec x, dvec w, dvec theta, std::string type, double delta, int b, int m);
+RcppExport SEXP _ranktiesR_ranktiesloglik(SEXP ySEXP, SEXP xSEXP, SEXP wSEXP, SEXP thetaSEXP, SEXP typeSEXP, SEXP deltaSEXP, SEXP bSEXP, SEXP mSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< umat >::type y(ySEXP);
     Rcpp::traits::input_parameter< dvec >::type x(xSEXP);
+    Rcpp::traits::input_parameter< dvec >::type w(wSEXP);
     Rcpp::traits::input_parameter< dvec >::type theta(thetaSEXP);
     Rcpp::traits::input_parameter< std::string >::type type(typeSEXP);
     Rcpp::traits::input_parameter< double >::type delta(deltaSEXP);
     Rcpp::traits::input_parameter< int >::type b(bSEXP);
     Rcpp::traits::input_parameter< int >::type m(mSEXP);
-    rcpp_result_gen = Rcpp::wrap(ranktiesloglik(y, x, theta, type, delta, b, m));
-    return rcpp_result_gen;
-END_RCPP
-}
-// foo
-double foo(arma::vec m, arma::mat s, arma::vec low, arma::vec upp, int n);
-RcppExport SEXP _ranktiesR_foo(SEXP mSEXP, SEXP sSEXP, SEXP lowSEXP, SEXP uppSEXP, SEXP nSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::vec >::type m(mSEXP);
-    Rcpp::traits::input_parameter< arma::mat >::type s(sSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type low(lowSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type upp(uppSEXP);
-    Rcpp::traits::input_parameter< int >::type n(nSEXP);
-    rcpp_result_gen = Rcpp::wrap(foo(m, s, low, upp, n));
+    rcpp_result_gen = Rcpp::wrap(ranktiesloglik(y, x, w, theta, type, delta, b, m));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -99,13 +67,29 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// rankmodel
+Rcpp::List rankmodel(umat y, dmat x, uvec n, uvec m, int t, bool print, int h);
+RcppExport SEXP _ranktiesR_rankmodel(SEXP ySEXP, SEXP xSEXP, SEXP nSEXP, SEXP mSEXP, SEXP tSEXP, SEXP printSEXP, SEXP hSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< umat >::type y(ySEXP);
+    Rcpp::traits::input_parameter< dmat >::type x(xSEXP);
+    Rcpp::traits::input_parameter< uvec >::type n(nSEXP);
+    Rcpp::traits::input_parameter< uvec >::type m(mSEXP);
+    Rcpp::traits::input_parameter< int >::type t(tSEXP);
+    Rcpp::traits::input_parameter< bool >::type print(printSEXP);
+    Rcpp::traits::input_parameter< int >::type h(hSEXP);
+    rcpp_result_gen = Rcpp::wrap(rankmodel(y, x, n, m, t, print, h));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_ranktiesR_genz", (DL_FUNC) &_ranktiesR_genz, 8},
-    {"_ranktiesR_rankties", (DL_FUNC) &_ranktiesR_rankties, 11},
-    {"_ranktiesR_ranktiesloglik", (DL_FUNC) &_ranktiesR_ranktiesloglik, 7},
-    {"_ranktiesR_foo", (DL_FUNC) &_ranktiesR_foo, 5},
+    {"_ranktiesR_ranktiesmodel", (DL_FUNC) &_ranktiesR_ranktiesmodel, 11},
+    {"_ranktiesR_ranktiesloglik", (DL_FUNC) &_ranktiesR_ranktiesloglik, 8},
     {"_ranktiesR_residuals", (DL_FUNC) &_ranktiesR_residuals, 6},
+    {"_ranktiesR_rankmodel", (DL_FUNC) &_ranktiesR_rankmodel, 7},
     {NULL, NULL, 0}
 };
 

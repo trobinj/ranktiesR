@@ -5,16 +5,14 @@
 #include "ranktiesR_types.h"
 #include "misc.h"
 
-/* The pmvnorm function uses a Monte Carlo algorithm due to Genz (1992, Journal of
- * Computational and Graphical Statistics). I added a parameter nmin for the
- * minimum number of iterations before checking the estimated Monte Carlo error.
- */
-
-namespace pmvnormspc {
-  
+namespace pmvnormspc 
+{  
   double pnorm(double z) 
   {
-    return R::pnorm(z, 0.0, 1.0, true, false);
+    double y = R::pnorm(z, 0.0, 1.0, true, false);
+    if (y < 0.000001) return 0.000001;
+    if (y > 0.999999) return 0.999999;
+    return y;
   }
   double qnorm(double p) 
   {
@@ -22,12 +20,11 @@ namespace pmvnormspc {
   }
 }
 
-// [[Rcpp::export]]
-double genz(arma::vec a, arma::vec b, arma::vec mu, arma::mat sigma, double epsilon, double alpha, int nmin, int nmax) {
-
+double genz(arma::vec a, arma::vec b, arma::vec mu, arma::mat c, double epsilon, double alpha, int nmin, int nmax) 
+{
   using namespace pmvnormspc;
 
-  arma::mat c = chol(sigma, "lower");
+  // arma::mat c = chol(sigma, "lower");
   a = a - mu;
   b = b - mu;
 
@@ -47,15 +44,19 @@ double genz(arma::vec a, arma::vec b, arma::vec mu, arma::mat sigma, double epsi
   for (int k = 0; k < nmax; ++k) {
     w.randu();
     for (int i = 1; i < m; ++i) {
+
       y(i - 1) = qnorm(d(i - 1) + w(i - 1) * (e(i - 1) - d(i - 1)));
+
       cy = 0.0;
       for (int j = 0; j < i; ++j) {
         cy = cy + c(i, j) * y(j);
       }
+
       d(i) = pnorm((a(i) - cy) / c(i, i));
       e(i) = pnorm((b(i) - cy) / c(i, i));
       f(i) = (e(i) - d(i)) * f(i - 1);
     }
+    
     N = k + 1;
     intsum = intsum + f(m - 1);
     varsum = varsum + pow(f(m - 1), 2);

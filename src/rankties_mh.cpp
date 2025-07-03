@@ -4,9 +4,7 @@
 #include "seqcluster.h"
 #include "hclust.h"
 #include "poon_xu.h"
-#include "ghk.h"
 #include "genz.h"
-#include <algorithm>
 
 // [[Rcpp::depends(RcppArmadillo)]]
 
@@ -270,7 +268,7 @@ public:
 };
 
 // [[Rcpp::export]]
-Rcpp::List rankties(umat y, dmat x, dmat z, uvec n, uvec m, int t, double delta, double scale, std::string type, int h, bool print)
+Rcpp::List ranktiesmodel(umat y, dmat x, dmat z, uvec n, uvec m, int t, double delta, double scale, std::string type, int h, bool print)
 {
   using namespace Rcpp;
 
@@ -302,9 +300,9 @@ Rcpp::List rankties(umat y, dmat x, dmat z, uvec n, uvec m, int t, double delta,
     data.estep();
     data.mstep();
 
-    out.row(i+1) = data.getparameters().t();
+    out.row(i + 1) = data.getparameters().t();
 
-    if ((i+1) % 1 == 0 && print) {
+    if ((i + 1) % 1 == 0 && print) {
       data.getparameters(bhat, shat);
       dump<int>(i+1, "iterations: \n");
       dump<dmat>(bhat, "beta: \n");
@@ -333,7 +331,7 @@ Rcpp::List rankties(umat y, dmat x, dmat z, uvec n, uvec m, int t, double delta,
 }
 
 // [[Rcpp::export]]
-double ranktiesloglik(umat y, dvec x, dvec theta, std::string type, double delta, int b, int m)
+double ranktiesloglik(umat y, dvec x, dvec w, dvec theta, std::string type, double delta, int b, int m)
 {
   clfunc cluster;
   if (type == "seq_min") cluster = seq_min;
@@ -376,13 +374,15 @@ double ranktiesloglik(umat y, dvec x, dvec theta, std::string type, double delta
   lower.fill(0.0);
   upper.fill(100);
 
+  dmat Q = arma::chol(sigm, "lower");
+
   dvec prob_all(R.n_rows);
+  prob_all.fill(0.0);
   for (int i = 0; i < R.n_rows; ++i) {
     if (indx_all(i)) {
       D = rankmat(R.row(i).t());
       D.shed_col(k - 1);
-      prob_all(i) = genz(lower, upper, D * mu, D * sigm * D.t(),
-        0.00001, 2.5, 100, 1000);
+      prob_all(i) = genz(lower, upper, mu, Q, 0.00001, 2.5, 100, 10000);
     }
   }
 
@@ -391,6 +391,9 @@ double ranktiesloglik(umat y, dvec x, dvec theta, std::string type, double delta
   for (int i = 0; i < n; ++i) {
     prob = prob_all.rows(indx_vec[i]);
     prob_set(i) = sum(prob);
+    if (prob_set(i) == 0) {
+      Rcpp::stop("zero probability estimate");
+    }
   }
 
   dmat u;
@@ -399,6 +402,7 @@ double ranktiesloglik(umat y, dvec x, dvec theta, std::string type, double delta
   dvec incl(m);
   double loglik = 0.0;
   cnorm zdist(mu, sigm);
+
   for (int i = 0; i < n; ++i) {
     yi = y.row(i).t();
     u = zsamp(yi, zdist, b, m);
@@ -406,68 +410,10 @@ double ranktiesloglik(umat y, dvec x, dvec theta, std::string type, double delta
       ytmp = cluster(u.row(j).t(), delta);
       incl(j) = all(yi == ytmp) ? prob_set(i) : 0.0;
     }
-    loglik = loglik + log(arma::sum(incl)) - log(m);
+    loglik = loglik + w(i) * (log(arma::sum(incl)) - log(m));
   }
 
   return loglik;
-}
-
-// double ranktiesloglik(umat y, dmat x, dvec theta, std::string type, double delta, int m)
-// {
-//   int n = y.n_rows;
-//   int k = y.n_cols;
-//   int p = x.n_cols;
-//   int q = k * (k - 1)/2;
-
-//   dmat beta(k-1,p);
-//   dmat sigm(k-1,k-1);
-
-//   clfunc cluster;
-//   if (type == "seq_min") cluster = seq_min;
-//   if (type == "seq_max") cluster = seq_max;
-//   if (type == "seq_avg") cluster = seq_avg;
-//   if (type == "poon_xu") cluster = poon_xu;
-
-//   dmat temp = theta.head((k-1)*p);
-//   beta = temp.reshape(size(beta));
-//   sigm = vec2lower(theta.tail(q), true);
-//   dmat Q = arma::chol(sigm, "lower");
-
-//   dmat eta = beta * x.t();
-//   uvec ytmp(k);
-//   dvec utmp(k);
-//   dvec mu(k);
-//   uvec yi(k);
-
-//   dvec prob(n);
-//   for (int i = 0; i < n; ++i) {
-//     mu = eta.col(i);
-//     yi = y.row(i).t();
-//     for (int j = 0; j < m; ++j) {
-//       utmp.head(k-1) = mvrnorm(mu, Q, true);
-//       ytmp = cluster(utmp, delta);
-//       if (all(yi == ytmp)) {
-//         ++prob(i);
-//       }
-//     }
-//     prob(i) = prob(i)/m;
-//   }
-
-//   double minprob = min(prob(find(prob > 0.0)));
-//   for (int i = 0; i < n; ++i) {
-//     Rcpp::Rcout << prob(i) << "\n";
-//     if (prob(i) == 0) {
-//       prob(i) = minprob;
-//     }
-//   }
-
-//   return sum(log(prob));
-// }
-
-// [[Rcpp::export]]
-double foo(arma::vec m, arma::mat s, arma::vec low, arma::vec upp, int n)
-{
-  return ghk(m, s, low, upp, n);
 }
 
 // [[Rcpp::export]]
@@ -508,7 +454,284 @@ Rcpp::List residuals(umat y, dvec x, dvec theta, std::string type, double delta,
   }
 
   return List::create(
+    Named("ranks") = wrap(v),
     Named("mean") = wrap(mean(conv_to<dmat>::from(v), 0) - mean(conv_to<dmat>::from(y), 0)),
     Named("cov") = wrap(cov(conv_to<dmat>::from(v), 1) - cov(conv_to<dmat>::from(y), 1))
   );
+}
+
+class rankvector
+{
+private:
+
+  uvec y;
+  dvec x;
+  dmat z;
+  int k, r, m, t;
+  std::vector<uvec> lower;
+  std::vector<uvec> upper;
+  const double ninf = arma::datum::nan;
+  const double pinf = arma::datum::nan;
+
+public:
+
+  rankvector(uvec y, dvec x) : y(y), x(x)
+  {
+    k = y.n_elem;
+    r = max(y);
+    m = 1;
+    t = 5*k;
+
+    z.set_size(m, k - 1);
+
+    dvec u(k);
+    dvec v(r, arma::fill::randn);
+    v = sort(v, "descend");
+    for (int j = 0; j < r; ++j) {
+      u(find(y == j + 1)).fill(v(j));
+    }
+    z.row(0) = u.head(k - 1).t() - u(k - 1);
+
+    lower.reserve(k);
+    upper.reserve(k);
+    for (int i = 0; i < k; ++i) {
+      lower.emplace_back(find(y == y(i) + 1));
+      upper.emplace_back(find(y == y(i) - 1));
+    }
+  }
+
+  void setsize(int m, int t)
+  {
+    this->m = m;
+    this->t = t;
+    z.resize(m, k - 1);
+  }
+
+  dvec zsamp(rvec& z, cnorm& zdist)
+  {
+    dvec u(k);
+    u.head(k - 1) = z.t();
+    double mj, sj, aj, bj;
+    for (int i = 0; i < t; ++i) {
+      for (int j = 0; j < k - 1; ++j) {
+        mj = zdist.getm(j, u.head(k - 1));
+        sj = zdist.gets(j);
+        aj = lower[j].is_empty() ? ninf : max(u(lower[j]));
+        bj = upper[j].is_empty() ? pinf : min(u(upper[j]));
+        u(j) = rtnorm(mj, sj, aj, bj);
+      }
+    }
+    return u.head(k - 1);
+  }
+
+  void estep(cnorm& zdist)
+  {
+    rvec z0 = z.row(0);
+    for (int j = 0; j < m; ++j) {
+      z.row(j) = zsamp(z0, zdist).t();
+    }
+  }
+
+  dmat getzx()
+  {
+    return mean(z, 0).t() * x.t();
+  }
+
+  dmat getzz()
+  {
+    return (z.t() * z) / m;
+  }
+
+  dvec gradient(dmat beta, dmat sigm)
+  {
+    using namespace arma;
+
+    dmat R = inv(sigm);
+    dmat I = eye(k-1, k-1);
+    dvec e(k-1);
+    dmat betag(size(beta));
+    dmat sigmg(size(sigm));
+    dvec sigmv;
+
+    betag.fill(0.0);
+    sigmg.fill(0.0);
+
+    for (int j = 0; j < m; ++j) {
+      e = (z.row(j).t() - beta * x);
+      betag = betag + R * e * x.t();
+      sigmg = sigmg - 0.5 * (2 * R - (R % I) - 2 * R * e * e.t() * R + ((R * e * e.t() * R) % I));
+    }
+
+    betag = betag / m;
+    sigmv = lowertri(sigmg);
+    sigmv = sigmv.tail(k * (k - 1) / 2 - 1);
+
+    return join_vert(vectorise(betag), sigmv);
+  }
+};
+
+class rankdata
+{
+private:
+
+  int n, p, q, k;
+  umat y;
+  dmat x;
+  dmat beta;
+  dmat sigm;
+  dmat xx, xxinv;
+  std::vector<rankvector> data;
+
+public:
+
+  rankdata(umat y, dmat x) : y(y), x(x)
+  {
+    n = y.n_rows;
+    p = x.n_cols;
+    k = y.n_cols;
+    q = k * (k - 1) / 2;
+
+    beta.zeros(k - 1, p);
+    sigm.eye(k - 1, k - 1);
+
+    xx = x.t() * x;
+    xxinv = inv(xx);
+
+    data.reserve(n);
+    for (int i = 0; i < n; ++i) {
+      data.emplace_back(y.row(i).t(), x.row(i).t());
+    }
+  }
+
+  dvec getparameters()
+  {
+    dvec theta((k - 1) * p + q);
+    theta.head((k - 1) * p) = vectorise(beta);
+    theta.tail(q) = vectorise(lowertri(sigm));
+    return theta;
+  }
+
+  void getparameters(dmat& bhat, dmat& shat)
+  {
+    bhat = beta;
+    shat = sigm;
+  }
+
+  void setparameters(dvec theta)
+  {
+    dmat temp = theta.head((k-1)*p);
+    beta = temp.reshape(size(beta));
+    sigm = vec2lower(theta.tail(q), true);
+  }
+
+  void setsize(int m, int t)
+  {
+    for (auto& obs : data) {
+      obs.setsize(m, t);
+    }
+  }
+
+  void estep()
+  {
+    cnorm zdist(sigm);
+    dmat eta = beta * x.t();
+
+    for (int i = 0; i < n; ++i) {
+      zdist.setm(eta.col(i));
+      data[i].estep(zdist);
+    }
+  }
+
+  void mstep()
+  {
+    dmat ezx(k - 1, p);
+    dmat ezz(k - 1, k - 1);
+
+    for (int i = 0; i < n; ++i) {
+      ezx = ezx + data[i].getzx();
+      ezz = ezz + data[i].getzz();
+    }
+
+    beta = ezx * xxinv;
+    sigm = (ezz - beta * xx * beta.t()) / n;
+  }
+
+  void xstep()
+  {
+    double d = 1.0 / sigm(0,0);
+    sigm = sigm * d;
+    beta = beta * sqrt(d);
+  }
+
+  dmat vmat()
+  {
+    dmat score(n, (k - 1) * p + q - 1);
+    for (int i = 0; i < n; ++i) {
+      score.row(i) = data[i].gradient(beta, sigm).t();
+    }
+    return inv(score.t() * score);
+  }
+};
+
+// [[Rcpp::export]]
+Rcpp::List rankmodel(umat y, dmat x, uvec n, uvec m, int t, bool print, int h)
+{
+  using namespace Rcpp;
+
+  int k = y.n_cols;
+  int p = x.n_cols;
+  int q = k * (k - 1) / 2;
+
+  int m0 = m(0);
+  int mf = m(1);
+  int n0 = n(0);
+  int nf = n(1);
+
+  rankdata data(y, x);
+
+  data.setsize(m0, t);
+
+  dmat out(n0 + nf + 1, (k - 1)*p + q);
+  dmat bhat, shat;
+
+  out.row(0) = data.getparameters().t();
+
+  for (int i = 0; i < n0 + nf; ++i) {
+
+    if (i == n0) {
+      data.setsize(mf, t);
+    }
+
+    data.estep();
+    data.mstep();
+    data.xstep();
+
+    out.row(i + 1) = data.getparameters().t();
+
+    if ((i + 1) % 1 == 0 && print) {
+      data.getparameters(bhat, shat);
+      dump<int>(i+1, "iterations: \n");
+      dump<dmat>(bhat, "beta: \n");
+      dump<dmat>(shat, "sigm: \n");
+    }
+
+    Rcpp::checkUserInterrupt();
+  }
+
+  dvec theta = mean(out.tail_rows(nf), 0).t();
+    dmat vcov;
+    if (h) {
+      data.setparameters(theta);
+      data.setsize(h, t);
+      data.estep();
+      vcov = data.vmat();
+    } else {
+      vcov.fill(arma::datum::nan);
+    }
+
+    return List::create(
+      Named("out") = wrap(out),
+      Named("theta") = wrap(theta),
+      Named("vcov") = wrap(vcov)
+    );
 }
