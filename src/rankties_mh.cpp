@@ -719,19 +719,19 @@ Rcpp::List rankmodel(umat y, dmat x, uvec n, uvec m, int t, bool print, int h)
   }
 
   dvec theta = mean(out.tail_rows(nf), 0).t();
-    dmat vcov;
-    if (h) {
-      data.setparameters(theta);
-      data.setsize(h, t);
-      data.estep();
-      vcov = data.vmat();
-    } else {
-      vcov.fill(arma::datum::nan);
-    }
+  dmat vcov;
+  if (h) {
+    data.setparameters(theta);
+    data.setsize(h, t);
+    data.estep();
+    vcov = data.vmat();
+  } else {
+    vcov.fill(arma::datum::nan);
+  }
 
-    return List::create(
-      Named("out") = wrap(out),
-      Named("theta") = wrap(theta),
-      Named("vcov") = wrap(vcov)
-    );
+  return List::create(
+    Named("out") = wrap(out),
+    Named("theta") = wrap(theta),
+    Named("vcov") = wrap(vcov)
+  );
 }
