@@ -67,8 +67,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // rankmodel
-Rcpp::List rankmodel(umat y, dmat x, uvec n, uvec m, int t, bool print, int h);
-RcppExport SEXP _ranktiesR_rankmodel(SEXP ySEXP, SEXP xSEXP, SEXP nSEXP, SEXP mSEXP, SEXP tSEXP, SEXP printSEXP, SEXP hSEXP) {
+Rcpp::List rankmodel(umat y, dmat x, uvec n, uvec m, int t, int h, bool print);
+RcppExport SEXP _ranktiesR_rankmodel(SEXP ySEXP, SEXP xSEXP, SEXP nSEXP, SEXP mSEXP, SEXP tSEXP, SEXP hSEXP, SEXP printSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -77,9 +77,9 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< uvec >::type n(nSEXP);
     Rcpp::traits::input_parameter< uvec >::type m(mSEXP);
     Rcpp::traits::input_parameter< int >::type t(tSEXP);
-    Rcpp::traits::input_parameter< bool >::type print(printSEXP);
     Rcpp::traits::input_parameter< int >::type h(hSEXP);
-    rcpp_result_gen = Rcpp::wrap(rankmodel(y, x, n, m, t, print, h));
+    Rcpp::traits::input_parameter< bool >::type print(printSEXP);
+    rcpp_result_gen = Rcpp::wrap(rankmodel(y, x, n, m, t, h, print));
     return rcpp_result_gen;
 END_RCPP
 }

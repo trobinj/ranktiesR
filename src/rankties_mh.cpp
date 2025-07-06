@@ -674,7 +674,7 @@ public:
 };
 
 // [[Rcpp::export]]
-Rcpp::List rankmodel(umat y, dmat x, uvec n, uvec m, int t, bool print, int h)
+Rcpp::List rankmodel(umat y, dmat x, uvec n, uvec m, int t, int h, bool print)
 {
   using namespace Rcpp;
 

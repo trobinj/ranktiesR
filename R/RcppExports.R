@@ -13,7 +13,7 @@ residuals <- function(y, x, theta, type, delta, n) {
     .Call(`_ranktiesR_residuals`, y, x, theta, type, delta, n)
 }
 
-rankmodel <- function(y, x, n, m, t, print, h) {
-    .Call(`_ranktiesR_rankmodel`, y, x, n, m, t, print, h)
+rankmodel <- function(y, x, n, m, t, h, print) {
+    .Call(`_ranktiesR_rankmodel`, y, x, n, m, t, h, print)
 }
 
