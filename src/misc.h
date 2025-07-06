@@ -6,6 +6,29 @@
 
 // [[Rcpp::depends(RcppArmadillo)]]
 
+unsigned int indx(uvec x, int y)
+{
+	return as_scalar(find(x == y));
+}
+
+dvec zstart(uvec y, double delta) 
+{
+	using namespace arma;
+
+	int k = y.n_elem;
+	int kmax = max(y);
+	dvec u = regspace<dvec>(kmax, -1, 1) * delta * 1.5;
+	dvec z(k);
+
+	for (int j = 0; j < kmax; ++j) {
+		z(find(y == j + 1)).fill(u(j));
+	}
+
+	z = z - z(k - 1) + randu(k, distr_param(-0.01, 0.01));
+
+	return z.head(k - 1); 
+}
+
 int factorial(uint n)
 {
   return (n == 1 || n == 0) ? 1 : factorial(n - 1) * n;
@@ -48,12 +71,7 @@ public:
 	}
 };
 
-unsigned int indx(uvec x, int y)
-{
-	return as_scalar(find(x == y));
-}
-
-uvec rankvec(dvec y)
+uvec rankvec(dvec y) // change argument type to auto? 
 {
   int n = y.n_elem;
   uvec indx = sort_index(y);

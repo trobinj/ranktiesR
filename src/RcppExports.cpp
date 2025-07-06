@@ -13,14 +13,13 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // ranktiesmodel
-Rcpp::List ranktiesmodel(umat y, dmat x, dmat z, uvec n, uvec m, int t, double delta, double scale, std::string type, int h, bool print);
-RcppExport SEXP _ranktiesR_ranktiesmodel(SEXP ySEXP, SEXP xSEXP, SEXP zSEXP, SEXP nSEXP, SEXP mSEXP, SEXP tSEXP, SEXP deltaSEXP, SEXP scaleSEXP, SEXP typeSEXP, SEXP hSEXP, SEXP printSEXP) {
+Rcpp::List ranktiesmodel(umat y, dmat x, uvec n, uvec m, int t, double delta, double scale, std::string type, int h, bool print);
+RcppExport SEXP _ranktiesR_ranktiesmodel(SEXP ySEXP, SEXP xSEXP, SEXP nSEXP, SEXP mSEXP, SEXP tSEXP, SEXP deltaSEXP, SEXP scaleSEXP, SEXP typeSEXP, SEXP hSEXP, SEXP printSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< umat >::type y(ySEXP);
     Rcpp::traits::input_parameter< dmat >::type x(xSEXP);
-    Rcpp::traits::input_parameter< dmat >::type z(zSEXP);
     Rcpp::traits::input_parameter< uvec >::type n(nSEXP);
     Rcpp::traits::input_parameter< uvec >::type m(mSEXP);
     Rcpp::traits::input_parameter< int >::type t(tSEXP);
@@ -29,7 +28,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< std::string >::type type(typeSEXP);
     Rcpp::traits::input_parameter< int >::type h(hSEXP);
     Rcpp::traits::input_parameter< bool >::type print(printSEXP);
-    rcpp_result_gen = Rcpp::wrap(ranktiesmodel(y, x, z, n, m, t, delta, scale, type, h, print));
+    rcpp_result_gen = Rcpp::wrap(ranktiesmodel(y, x, n, m, t, delta, scale, type, h, print));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -86,7 +85,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_ranktiesR_ranktiesmodel", (DL_FUNC) &_ranktiesR_ranktiesmodel, 11},
+    {"_ranktiesR_ranktiesmodel", (DL_FUNC) &_ranktiesR_ranktiesmodel, 10},
     {"_ranktiesR_ranktiesloglik", (DL_FUNC) &_ranktiesR_ranktiesloglik, 8},
     {"_ranktiesR_residuals", (DL_FUNC) &_ranktiesR_residuals, 6},
     {"_ranktiesR_rankmodel", (DL_FUNC) &_ranktiesR_rankmodel, 7},

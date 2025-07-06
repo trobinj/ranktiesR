@@ -1,5 +1,5 @@
-#ifndef TYPES
-#define TYPES
+#ifndef TYPES_h
+#define TYPES_h
 
 #include <RcppArmadillo.h>
 

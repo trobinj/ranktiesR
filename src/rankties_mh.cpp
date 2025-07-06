@@ -6,6 +6,8 @@
 #include "poon_xu.h"
 #include "genz.h"
 
+// Maybe remove scale setter.
+
 // [[Rcpp::depends(RcppArmadillo)]]
 
 template <typename type>
@@ -26,7 +28,6 @@ private:
 
   uvec y;
   dvec x;
-  dvec z;
   dmat zfull;
   dmat zthin;
   int k, m, t;
@@ -36,7 +37,7 @@ private:
 
 public:
 
-  ranktiesvector(uvec y, dvec x, dvec z, std::string type) : y(y), x(x), z(z), type(type)
+  ranktiesvector(uvec y, dvec x, std::string type, double delta) : y(y), x(x), type(type), delta(delta)
   {
     if (type == "seq_min") cluster = seq_min;
     if (type == "seq_max") cluster = seq_max;
@@ -49,29 +50,27 @@ public:
     k = y.n_elem;
     m = 5;
     t = 100;
-    delta = 0.1;
     scale = 0.1;
 
-    zfull.set_size(t*(m+1), k-1);
-    zthin.set_size(m, k-1);
-    zfull.row(0) = z.t();
+    zfull.set_size(t * (m + 1), k - 1);
+    zthin.set_size(m, k - 1);
+    zfull.row(0) = zstart(y, delta).t();
   }
 
   void setscale(double scale) {
     this->scale = scale;
   }
 
-  void setsize(int m, int t, double delta)
+  void setsize(int m, int t)
   {
-    z = zfull.row(0).t();
+    dvec z0 = zfull.row(0).t();
 
     this->m = m;
     this->t = t;
-    this->delta = delta;
 
     zthin.resize(m, k-1);
     zfull.resize(t*(m+1), k-1);
-    zfull.row(0) = z.t();
+    zfull.row(0) = z0.t();
   }
 
   void estep(dvec mu, dmat sigma, double& rate)
@@ -134,7 +133,7 @@ public:
 
     dmat R = inv(sigm);
     dmat I = eye(k-1, k-1);
-    dvec z(k-1);
+    dvec e(k-1);
     dmat betag(size(beta));
     dmat sigmg(size(sigm));
     dvec sigmv;
@@ -143,9 +142,10 @@ public:
     sigmg.fill(0.0);
 
     for (int j = 0; j < m; ++j) {
-      z = (zthin.row(j).t() - beta * x);
-      betag = betag + R * z * x.t();
-      sigmg = sigmg - 0.5 * (2 * R - (R % I) - 2 * R * z * z.t() * R + ((R * z * z.t() * R) % I));
+      e = (zthin.row(j).t() - beta * x);
+      betag = betag + R * e * x.t();
+      sigmg = sigmg - 0.5 * (2 * R - (R % I) - 
+        2 * R * e * e.t() * R + ((R * e * e.t() * R) % I));
     }
 
     betag = betag / m;
@@ -162,16 +162,16 @@ private:
   int n, p, q, k;
   umat y;
   dmat x;
-  dmat z;
   dmat beta;
   dmat sigm;
   dmat xx, xxinv;
   std::vector<ranktiesvector> data;
   std::string type;
+  double delta;
 
 public:
 
-  ranktiesdata(umat y, dmat x, dmat z, std::string type) : y(y), x(x), z(z), type(type)
+  ranktiesdata(umat y, dmat x, std::string type, double delta) : y(y), x(x), type(type), delta(delta)
   {
     n = y.n_rows;
     p = x.n_cols;
@@ -186,7 +186,7 @@ public:
 
     data.reserve(n);
     for (int i = 0; i < n; ++i) {
-      data.emplace_back(y.row(i).t(), x.row(i).t(), z.row(i).t(), type);
+      data.emplace_back(y.row(i).t(), x.row(i).t(), type, delta);
     }
   }
 
@@ -218,10 +218,10 @@ public:
     }
   }
 
-  void setsize(int m, int t, double delta)
+  void setsize(int m, int t)
   {
     for (auto& obs : data) {
-      obs.setsize(m, t, delta);
+      obs.setsize(m, t);
     }
   }
 
@@ -268,7 +268,7 @@ public:
 };
 
 // [[Rcpp::export]]
-Rcpp::List ranktiesmodel(umat y, dmat x, dmat z, uvec n, uvec m, int t, double delta, double scale, std::string type, int h, bool print)
+Rcpp::List ranktiesmodel(umat y, dmat x, uvec n, uvec m, int t, double delta, double scale, std::string type, int h, bool print)
 {
   using namespace Rcpp;
 
@@ -281,10 +281,10 @@ Rcpp::List ranktiesmodel(umat y, dmat x, dmat z, uvec n, uvec m, int t, double d
   int n0 = n(0);
   int nf = n(1);
 
-  ranktiesdata data(y, x, z, type);
+  ranktiesdata data(y, x, type, delta);
 
   data.setscale(scale);
-  data.setsize(m0, t, delta);
+  data.setsize(m0, t);
 
   dmat out(n0 + nf + 1, (k-1)*p + q);
   dmat bhat, shat;
@@ -294,7 +294,7 @@ Rcpp::List ranktiesmodel(umat y, dmat x, dmat z, uvec n, uvec m, int t, double d
   for (int i = 0; i < n0 + nf; ++i) {
 
     if (i == n0) {
-      data.setsize(mf, t, delta);
+      data.setsize(mf, t);
     }
 
     data.estep();
@@ -316,7 +316,7 @@ Rcpp::List ranktiesmodel(umat y, dmat x, dmat z, uvec n, uvec m, int t, double d
   dmat vcov;
   if (h) {
     data.setparameters(theta);
-    data.setsize(h, t, delta);
+    data.setsize(h, t);
     data.estep();
     vcov = data.vmat();
   } else {
