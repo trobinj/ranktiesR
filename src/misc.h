@@ -192,6 +192,12 @@ dvec lowertri(dmat x, bool diag = true)
 	return y;
 }
 
+// [[Rcpp::export]]
+dvec foo(dmat x) 
+{
+	return lowertri(x);
+}
+
 int randint(int a, int b)
 {
   return floor(R::runif(0.0, 1.0) * (b - a + 1)) + a;

@@ -144,7 +144,7 @@ public:
     for (int j = 0; j < m; ++j) {
       e = (zthin.row(j).t() - beta * x);
       betag = betag + R * e * x.t();
-      sigmg = sigmg - 0.5 * (2 * R - (R % I) - 
+      sigmg = sigmg - 0.5 * (2 * R - (R % I) -
         2 * R * e * e.t() * R + ((R * e * e.t() * R) % I));
     }
 
@@ -403,6 +403,7 @@ double ranktiesloglik(umat y, dvec x, dvec w, dvec theta, std::string type, doub
   double loglik = 0.0;
   cnorm zdist(mu, sigm);
 
+  dvec sumprob(n);
   for (int i = 0; i < n; ++i) {
     yi = y.row(i).t();
     u = zsamp(yi, zdist, b, m);
@@ -410,7 +411,16 @@ double ranktiesloglik(umat y, dvec x, dvec w, dvec theta, std::string type, doub
       ytmp = cluster(u.row(j).t(), delta);
       incl(j) = all(yi == ytmp) ? prob_set(i) : 0.0;
     }
-    loglik = loglik + w(i) * (log(arma::sum(incl)) - log(m));
+    sumprob(i) = arma::sum(incl);
+    // loglik = loglik + w(i) * (log(arma::sum(incl)) - log(m));
+  }
+
+  double minprob = min(sumprob(find(sumprob > 0.0)));
+  for (int i = 0; i < n; ++i) {
+    if (sumprob(i) == 0) {
+      sumprob(i) = minprob;
+    }
+    loglik = loglik + w(i) * (log(sumprob(i)) - log(m));
   }
 
   return loglik;

@@ -12,6 +12,17 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
+// foo
+dvec foo(dmat x);
+RcppExport SEXP _ranktiesR_foo(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< dmat >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(foo(x));
+    return rcpp_result_gen;
+END_RCPP
+}
 // ranktiesmodel
 Rcpp::List ranktiesmodel(umat y, dmat x, uvec n, uvec m, int t, double delta, double scale, std::string type, int h, bool print);
 RcppExport SEXP _ranktiesR_ranktiesmodel(SEXP ySEXP, SEXP xSEXP, SEXP nSEXP, SEXP mSEXP, SEXP tSEXP, SEXP deltaSEXP, SEXP scaleSEXP, SEXP typeSEXP, SEXP hSEXP, SEXP printSEXP) {
@@ -85,6 +96,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_ranktiesR_foo", (DL_FUNC) &_ranktiesR_foo, 1},
     {"_ranktiesR_ranktiesmodel", (DL_FUNC) &_ranktiesR_ranktiesmodel, 10},
     {"_ranktiesR_ranktiesloglik", (DL_FUNC) &_ranktiesR_ranktiesloglik, 8},
     {"_ranktiesR_residuals", (DL_FUNC) &_ranktiesR_residuals, 6},
