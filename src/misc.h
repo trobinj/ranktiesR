@@ -11,7 +11,7 @@ unsigned int indx(uvec x, int y)
 	return as_scalar(find(x == y));
 }
 
-dvec zstart(uvec y, double delta) 
+dvec zstart(uvec y, double delta)
 {
 	using namespace arma;
 
@@ -26,7 +26,7 @@ dvec zstart(uvec y, double delta)
 
 	z = z - z(k - 1) + randu(k, distr_param(-0.01, 0.01));
 
-	return z.head(k - 1); 
+	return z.head(k - 1);
 }
 
 int factorial(uint n)
@@ -71,7 +71,7 @@ public:
 	}
 };
 
-uvec rankvec(dvec y) // change argument type to auto? 
+uvec rankvec(dvec y) // change argument type to auto?
 {
   int n = y.n_elem;
   uvec indx = sort_index(y);
@@ -190,12 +190,6 @@ dvec lowertri(dmat x, bool diag = true)
 		}
 	}
 	return y;
-}
-
-// [[Rcpp::export]]
-dvec foo(dmat x) 
-{
-	return lowertri(x);
 }
 
 int randint(int a, int b)

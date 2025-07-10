@@ -12,14 +12,15 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
-// foo
-dvec foo(dmat x);
-RcppExport SEXP _ranktiesR_foo(SEXP xSEXP) {
+// kstart
+dvec kstart(uvec y, double delta);
+RcppExport SEXP _ranktiesR_kstart(SEXP ySEXP, SEXP deltaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< dmat >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(foo(x));
+    Rcpp::traits::input_parameter< uvec >::type y(ySEXP);
+    Rcpp::traits::input_parameter< double >::type delta(deltaSEXP);
+    rcpp_result_gen = Rcpp::wrap(kstart(y, delta));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -61,9 +62,9 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// residuals
-Rcpp::List residuals(umat y, dvec x, dvec theta, std::string type, double delta, int n);
-RcppExport SEXP _ranktiesR_residuals(SEXP ySEXP, SEXP xSEXP, SEXP thetaSEXP, SEXP typeSEXP, SEXP deltaSEXP, SEXP nSEXP) {
+// rankresiduals
+umat rankresiduals(umat y, dvec x, dvec theta, std::string type, double delta, int n);
+RcppExport SEXP _ranktiesR_rankresiduals(SEXP ySEXP, SEXP xSEXP, SEXP thetaSEXP, SEXP typeSEXP, SEXP deltaSEXP, SEXP nSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -73,7 +74,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< std::string >::type type(typeSEXP);
     Rcpp::traits::input_parameter< double >::type delta(deltaSEXP);
     Rcpp::traits::input_parameter< int >::type n(nSEXP);
-    rcpp_result_gen = Rcpp::wrap(residuals(y, x, theta, type, delta, n));
+    rcpp_result_gen = Rcpp::wrap(rankresiduals(y, x, theta, type, delta, n));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -96,10 +97,10 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_ranktiesR_foo", (DL_FUNC) &_ranktiesR_foo, 1},
+    {"_ranktiesR_kstart", (DL_FUNC) &_ranktiesR_kstart, 2},
     {"_ranktiesR_ranktiesmodel", (DL_FUNC) &_ranktiesR_ranktiesmodel, 10},
     {"_ranktiesR_ranktiesloglik", (DL_FUNC) &_ranktiesR_ranktiesloglik, 8},
-    {"_ranktiesR_residuals", (DL_FUNC) &_ranktiesR_residuals, 6},
+    {"_ranktiesR_rankresiduals", (DL_FUNC) &_ranktiesR_rankresiduals, 6},
     {"_ranktiesR_rankmodel", (DL_FUNC) &_ranktiesR_rankmodel, 7},
     {NULL, NULL, 0}
 };

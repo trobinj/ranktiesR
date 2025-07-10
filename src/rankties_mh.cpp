@@ -5,6 +5,7 @@
 #include "hclust.h"
 #include "poon_xu.h"
 #include "genz.h"
+#include "kmeans1d.h"
 
 // Maybe remove scale setter.
 
@@ -21,6 +22,8 @@ static void dump(type x, std::string y)
 {
 	Rcpp::Rcout << y << "\n" << x << "\n";
 }
+
+std::vector<umat> ysets;
 
 class ranktiesvector
 {
@@ -54,7 +57,12 @@ public:
 
     zfull.set_size(t * (m + 1), k - 1);
     zthin.set_size(m, k - 1);
-    zfull.row(0) = zstart(y, delta).t();
+
+    if (type == "kmean1d") {
+      zfull.row(0) = kstart(y, delta).t();
+    } else {
+      zfull.row(0) = zstart(y, delta).t();
+    }
   }
 
   void setscale(double scale) {
@@ -91,7 +99,11 @@ public:
     for (int i = 1; i < t*(m + 1); ++i) {
       uold = zfull.row(i-1).t();
       unew.head(k-1) = uold + randn<dvec>(k-1, distr_param(0.0, scale));
-      ynew = cluster(unew, delta);
+      if (type == "kmean1d") {
+        ynew = kmean1d(unew, delta, ysets);
+      } else {
+        ynew = cluster(unew, delta);
+      }
       if (all(ynew == y)) {
         lprb = std::min(0.0, dist.logpdf(unew.head(k-1)) - dist.logpdf(uold));
         if (R::runif(0.0, 1.0) < exp(lprb)) {
@@ -281,6 +293,8 @@ Rcpp::List ranktiesmodel(umat y, dmat x, uvec n, uvec m, int t, double delta, do
   int n0 = n(0);
   int nf = n(1);
 
+  ysets = kmeans1dpartvec(k);
+
   ranktiesdata data(y, x, type, delta);
 
   data.setscale(scale);
@@ -408,7 +422,11 @@ double ranktiesloglik(umat y, dvec x, dvec w, dvec theta, std::string type, doub
     yi = y.row(i).t();
     u = zsamp(yi, zdist, b, m);
     for (int j = 0; j < m; ++j) {
-      ytmp = cluster(u.row(j).t(), delta);
+      if (type == "kmean1d") {
+        ytmp = kmean1d(u.row(j).t(), delta, ysets);
+      } else {
+        ytmp = cluster(u.row(j).t(), delta);
+      }
       incl(j) = all(yi == ytmp) ? prob_set(i) : 0.0;
     }
     sumprob(i) = arma::sum(incl);
@@ -427,7 +445,7 @@ double ranktiesloglik(umat y, dvec x, dvec w, dvec theta, std::string type, doub
 }
 
 // [[Rcpp::export]]
-Rcpp::List residuals(umat y, dvec x, dvec theta, std::string type, double delta, int n)
+umat rankresiduals(umat y, dvec x, dvec theta, std::string type, double delta, int n)
 {
   using namespace arma;
   using namespace Rcpp;
@@ -460,14 +478,14 @@ Rcpp::List residuals(umat y, dvec x, dvec theta, std::string type, double delta,
 
   for (int i = 0; i < n; ++i) {
     utmp.head(k-1) = mvrnorm(mu, Q, true);
-    v.row(i) = cluster(utmp, delta).t();
+    if (type == "kmean1d") {
+      v.row(i) = kmean1d(utmp, delta, ysets).t();
+    } else {
+      v.row(i) = cluster(utmp, delta).t();
+    }
   }
 
-  return List::create(
-    Named("ranks") = wrap(v),
-    Named("mean") = wrap(mean(conv_to<dmat>::from(v), 0) - mean(conv_to<dmat>::from(y), 0)),
-    Named("cov") = wrap(cov(conv_to<dmat>::from(v), 1) - cov(conv_to<dmat>::from(y), 1))
-  );
+  return v;
 }
 
 class rankvector
@@ -745,3 +763,4 @@ Rcpp::List rankmodel(umat y, dmat x, uvec n, uvec m, int t, int h, bool print)
     Named("vcov") = wrap(vcov)
   );
 }
+

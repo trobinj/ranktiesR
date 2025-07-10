@@ -74,7 +74,7 @@ struct kmeansolution
 
 kmeansolution kmeansolve(dvec u, umat groups)
 {
-  uvec r = rankvec(-u);
+  uvec r = rankvec(u);
   u = sort(u);
 
   int g = groups.max() + 1;
@@ -100,11 +100,12 @@ kmeansolution kmeansolve(dvec u, umat groups)
     wss.row(imin).t(),
     groups.row(imin).t()
   };
-  out.groups = out.groups(r - 1);
+  out.groups =  out.groups(r - 1);
+  out.groups = -out.groups + max(out.groups) + 1;
   return out;
 }
 
-uvec kmeans1d(dvec u, double delta, std::vector<umat>& ysets)
+uvec kmean1d(dvec u, double delta, std::vector<umat>& ysets)
 {
   int k = u.n_elem;
 
@@ -120,18 +121,60 @@ uvec kmeans1d(dvec u, double delta, std::vector<umat>& ysets)
     vwg.set_size(g);
     vwg.fill(0.0);
     out = kmeansolve(u, ysets[g - 2]);
-    for (int j = 0; j < g; ++j) {
-      if (out.wss(j) > 0) {
-        indx = find(out.groups == j);
-        // vwg(j) = out.wss(j) / indx.n_elem;
-        vwg(j) = out.wss(j);
-      }
-    }
-    if (sum(vwg) < delta) {
-      return out.groups + 1;
+    if (sum(out.wss) < delta) {
+      return out.groups;
     }
   }
   return rankvec(-u);
+}
+
+double withinss(uvec y, dvec u)
+{
+  int kmax = max(y);
+  dvec uj;
+  int nj;
+  double wws = 0.0;
+
+  for (int j = 0; j < kmax; ++j) {
+    uj = u(find(y == j + 1));
+    nj = uj.n_elem;
+    wws = wws + nj * var(uj, 1);
+  }
+
+  return wws;
+}
+
+// [[Rcpp::export]]
+dvec kstart(uvec y, double delta)
+{
+  using namespace arma;
+
+  int k = y.n_elem;
+  int kmax = max(y);
+
+  std::vector<umat> ysets;
+  ysets = kmeans1dpartvec(k);
+
+  dvec u(k);
+  uvec jset;
+  for (int j = 0; j < kmax; ++j) {
+    jset = find(y == j + 1);
+    u(jset) = randu(jset.n_elem, distr_param(-0.25, 0.25)) + kmax - j;
+  }
+
+  double wss;
+  kmeansolution tmp;
+  if (k == kmax) {
+    tmp = kmeansolve(u, ysets[kmax - 3]);
+    wss = sum(tmp.wss);
+    u = u/sqrt(wss) * sqrt(delta) * 1.01;
+  } else {
+    wss = withinss(y, u);
+    u = u/sqrt(wss) * sqrt(delta) * 0.99;
+  }
+
+  u = u - u(k - 1);
+  return u.head(k - 1);
 }
 
 #endif
