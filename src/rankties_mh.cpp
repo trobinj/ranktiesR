@@ -388,7 +388,7 @@ double ranktiesloglik(umat y, dvec x, dvec w, dvec theta, std::string type, doub
   dvec upper(k - 1);
 
   lower.fill(0.0);
-  upper.fill(100);
+  upper.fill(1000);
 
   dmat Q = arma::chol(sigm, "lower");
 
@@ -399,7 +399,7 @@ double ranktiesloglik(umat y, dvec x, dvec w, dvec theta, std::string type, doub
     if (indx_all(i)) {
       D = rankmat(R.row(i).t());
       D.shed_col(k - 1);
-      prob_all(i) = genz(lower, upper, mu, Q, 0.00001, 2.5, 100, 10000);
+      prob_all(i) = genz(lower, upper, mu, Q, 0.000001, 2.5, 100, 100000);
     }
   }
 
