@@ -361,6 +361,8 @@ double ranktiesloglik(umat y, dvec x, dvec w, dvec theta, std::string type, doub
   int p = x.n_elem;
   int q = k * (k - 1) / 2;
 
+  ysets = kmeans1dpartvec(k);
+
   umat R = allpermutations(k);
 
   uvec indx_all(R.n_rows);
@@ -393,6 +395,7 @@ double ranktiesloglik(umat y, dvec x, dvec w, dvec theta, std::string type, doub
   dvec prob_all(R.n_rows);
   prob_all.fill(0.0);
   for (int i = 0; i < R.n_rows; ++i) {
+    Rcpp::Rcout << "genz: " << i + 1 << "\n";
     if (indx_all(i)) {
       D = rankmat(R.row(i).t());
       D.shed_col(k - 1);
@@ -419,6 +422,7 @@ double ranktiesloglik(umat y, dvec x, dvec w, dvec theta, std::string type, doub
 
   dvec sumprob(n);
   for (int i = 0; i < n; ++i) {
+    Rcpp::Rcout << "sampling: " << i + 1 << "\n";
     yi = y.row(i).t();
     u = zsamp(yi, zdist, b, m);
     for (int j = 0; j < m; ++j) {
