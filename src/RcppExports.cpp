@@ -24,6 +24,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// poon_xu
+uvec poon_xu(dvec u, double delta);
+RcppExport SEXP _ranktiesR_poon_xu(SEXP uSEXP, SEXP deltaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< dvec >::type u(uSEXP);
+    Rcpp::traits::input_parameter< double >::type delta(deltaSEXP);
+    rcpp_result_gen = Rcpp::wrap(poon_xu(u, delta));
+    return rcpp_result_gen;
+END_RCPP
+}
 // ranktiesmodel
 Rcpp::List ranktiesmodel(umat y, dmat x, uvec n, uvec m, int t, double delta, double scale, std::string type, int h, bool print);
 RcppExport SEXP _ranktiesR_ranktiesmodel(SEXP ySEXP, SEXP xSEXP, SEXP nSEXP, SEXP mSEXP, SEXP tSEXP, SEXP deltaSEXP, SEXP scaleSEXP, SEXP typeSEXP, SEXP hSEXP, SEXP printSEXP) {
@@ -98,6 +110,7 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_ranktiesR_kstart", (DL_FUNC) &_ranktiesR_kstart, 2},
+    {"_ranktiesR_poon_xu", (DL_FUNC) &_ranktiesR_poon_xu, 2},
     {"_ranktiesR_ranktiesmodel", (DL_FUNC) &_ranktiesR_ranktiesmodel, 10},
     {"_ranktiesR_ranktiesloglik", (DL_FUNC) &_ranktiesR_ranktiesloglik, 8},
     {"_ranktiesR_rankresiduals", (DL_FUNC) &_ranktiesR_rankresiduals, 6},

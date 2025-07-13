@@ -7,6 +7,7 @@
 
 // [[Rcpp::depends(RcppArmadillo)]]
 
+// [[Rcpp::export]]
 uvec poon_xu(dvec u, double delta)
 {
 	int n = u.n_elem;

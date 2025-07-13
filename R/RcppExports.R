@@ -5,6 +5,10 @@ kstart <- function(y, delta) {
     .Call(`_ranktiesR_kstart`, y, delta)
 }
 
+poon_xu <- function(u, delta) {
+    .Call(`_ranktiesR_poon_xu`, u, delta)
+}
+
 ranktiesmodel <- function(y, x, n, m, t, delta, scale, type, h, print) {
     .Call(`_ranktiesR_ranktiesmodel`, y, x, n, m, t, delta, scale, type, h, print)
 }
