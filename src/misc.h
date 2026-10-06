@@ -58,8 +58,28 @@ private:
 
 public:
 
+	mvndist(int d) 
+	{
+		mu = zeros(d);
+		sigma = eye(d, d); 
+		ldet = d * log(2.0 * M_PI);
+		R = eye(d, d);
+	}
+
 	mvndist(dvec mu, dmat sigma) : mu(mu), sigma(sigma)
 	{
+		log_det_sympd(ldet, 2.0 * M_PI * sigma);
+		R = arma::chol(inv(sigma));
+	}
+
+	void setmu(dvec mu)
+	{
+		this->mu = mu;
+	}
+
+	void setsigma(dmat sigma)
+	{
+		this->sigma = sigma;
 		log_det_sympd(ldet, 2.0 * M_PI * sigma);
 		R = arma::chol(inv(sigma));
 	}

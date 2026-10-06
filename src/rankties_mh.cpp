@@ -156,8 +156,7 @@ public:
     for (int j = 0; j < m; ++j) {
       e = (zthin.row(j).t() - beta * x);
       betag = betag + R * e * x.t();
-      sigmg = sigmg - 0.5 * (2 * R - (R % I) -
-        2 * R * e * e.t() * R + ((R * e * e.t() * R) % I));
+      sigmg = sigmg - 0.5 * (2 * R - (R % I) - 2 * R * e * e.t() * R + ((R * e * e.t() * R) % I));
     }
 
     betag = betag / m;
@@ -399,7 +398,7 @@ double ranktiesloglik(umat y, dvec x, dvec w, dvec theta, std::string type, doub
     if (indx_all(i)) {
       D = rankmat(R.row(i).t());
       D.shed_col(k - 1);
-      prob_all(i) = genz(lower, upper, mu, Q, 0.000001, 2.5, 100, 10000);
+      prob_all(i) = genz(lower, upper, D*mu, D*Q*D.t(), 0.000001, 2.5, 100, 10000);
     }
   }
 
@@ -595,6 +594,7 @@ public:
     }
 
     betag = betag / m;
+    sigmg = sigmg / m;
     sigmv = lowertri(sigmg);
     sigmv = sigmv.tail(k * (k - 1) / 2 - 1);
 
