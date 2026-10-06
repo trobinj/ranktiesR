@@ -58,12 +58,12 @@ private:
 
 public:
 
-	mvndist(int d) 
+	mvndist(int d)
 	{
-		mu = zeros(d);
-		sigma = eye(d, d); 
+		mu = arma::zeros(d);
+		sigma = arma::eye(d, d);
 		ldet = d * log(2.0 * M_PI);
-		R = eye(d, d);
+		R = arma::eye(d, d);
 	}
 
 	mvndist(dvec mu, dmat sigma) : mu(mu), sigma(sigma)
